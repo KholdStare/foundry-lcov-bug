@@ -1,0 +1,39 @@
+name: Foundry Lcov bug
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# When pushing new commits to a pull request, automatically cancel the previous
+# workflow run. This reduces wasted compute power for CI that we pay for
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test-coverage:
+    name: Foundry Coverage
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Cache Foundry Compilers
+        uses: actions/cache@v4
+        with:
+          path: ~/.svm
+          key: foundry-solc-cache-${{ runner.os }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt install lcov
+
+      - name: Run coverage
+        run: |
+          ./run_coverage.sh
